@@ -1,10 +1,8 @@
 ### Run this file while connected via bluetooth to manually control the robot from your computer ###
 
 #!/usr/bin/env python3
-from ev3dev2.motor import Motor, OUTPUT_A, OUTPUT_B, OUTPUT_D, SpeedRPM, MoveTank
-from ev3dev2.sensor.lego import GyroSensor
-from better_turn_to_angle import turn
 from robot import Robot
+from ev3dev2.motor import OUTPUT_A, OUTPUT_D
 
 robot = Robot(OUTPUT_D, OUTPUT_A)
 
