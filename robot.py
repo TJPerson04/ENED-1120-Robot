@@ -6,6 +6,7 @@
 # Libraries
 from ev3dev2.motor import Motor, MoveTank, SpeedRPM
 from ev3dev2.sensor.lego import GyroSensor
+from ev3dev2.display import Display
 
 class Robot:
     def __init__(self, leftMotorAddr: str, rightMotorAddr: str, gyroSensorAddr: str|None = None, cm_per_rotation: float = 17.5):
@@ -23,6 +24,7 @@ class Robot:
         self.rightMotor = Motor(rightMotorAddr)
         self.motors = MoveTank(leftMotorAddr, rightMotorAddr)
         self.gyroSensor = GyroSensor(gyroSensorAddr)
+        self.disp = Display()
         return
         
         
@@ -97,3 +99,9 @@ class Robot:
         self.y = end[1]
         
         return [self.x, self.y]
+    
+
+    def displayText(self, text: str, x: int = 0, y: int = 0):
+        '''Displays the given text at the given x, y location - UNDER CONSTRUCTION'''
+        self.disp.text_grid(text, x=x, y=y)
+        self.disp.update()
