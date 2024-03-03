@@ -34,19 +34,27 @@ class Robot:
         # Zeros the gyro sensor
         self.gyroSensor.reset()
 
-        # Turns clockwise until the angle is met
-        while (self.gyroSensor.angle <= angle % 360):
-            # speed = abs(gyroSensor.angle - (angleDeg % 360) / 3.6)
-            # if (abs(speed) > 40):
-            #     speed = 40
-            self.leftMotor.on(speed)
-            self.rightMotor.on(-1 * speed)
+        if (angle == 0):
+            return True
+        elif (angle > 0):
+            # Turns clockwise until the angle is met
+            while (self.gyroSensor.angle <= angle):  # Might need angle % 360, not sure?
+                # speed = abs(gyroSensor.angle - (angleDeg % 360) / 3.6)
+                # if (abs(speed) > 40):
+                #     speed = 40
+                self.leftMotor.on(speed)
+                self.rightMotor.on(-1 * speed)
         
-        ### UNTESTED ###
-        # The robot will correct itself if it turns too far
-        # while (self.gyroSensor.angle > angle % 360):
-        #     self.leftMotor.on(-1 * speed)
-        #     self.rightMotor.on(speed)
+            ### UNTESTED ###
+            # The robot will correct itself if it turns too far
+            # while (self.gyroSensor.angle > angle % 360):
+            #     self.leftMotor.on(-1 * speed)
+            #     self.rightMotor.on(speed)
+        else:
+            # Turns counter-clockwise if the angle is negative
+            while (self.gyroSensor.angle >= angle):
+                self.leftMotor.on(-1 * speed)
+                self.rightMotor.on(speed)
     
         # Stops the motors
         self.leftMotor.stop()
@@ -67,35 +75,43 @@ class Robot:
     
 
     
-    def moveForward(self, cm: float, speed = SpeedRPM(40)):
-        '''Moves the robot forward the specified distance in centimeters'''
-        self.motors.on_for_rotations(speed, speed, cm / self.cm_per_rotation, True)
+    def moveForward(self, cm: float, speed = SpeedRPM(40), unit = 'cm'):
+        '''
+        Moves the robot forward the specified distance in centimeters\n
+        Unit can be either 'cm' or 'in'
+        '''
+
+        dist = cm / self.cm_per_rotation
+        if (unit == 'in'):
+            dist = (cm * 2.54) / self.cm_per_rotation
+        
+        self.motors.on_for_rotations(speed, speed, dist, True)
         return True
     
-    def moveBackward(self, cm: float, speed = SpeedRPM(40)):
+    def moveBackward(self, cm: float, speed = SpeedRPM(40), unit = 'cm'):
         '''Moves the robot backwards the specified distance in centimeters'''
-        self.moveForward(self, cm, -1 * speed)
+        self.moveForward(cm, speed, unit)
         return True
     
     ### UNTESTED ###
-    def moveTo(self, end: list[int] = [0, 0], speed = SpeedRPM(40)):
+    def moveTo(self, end: list[int] = [0, 0], speed = SpeedRPM(40), unit = 'cm'):
         '''Moves the robot to a location on a coordinate grid - UNTESTED'''
         # Move in x-direction
         if (end[0] > self.x):
             self.turnTo(90)
-            self.moveForward(end[0] - self.x, speed)
+            self.moveForward(end[0] - self.x, speed, unit)
         elif (end[0] < self.x):
             self.turnTo(270)
-            self.moveForward(self.x - end[0], speed)
+            self.moveForward(self.x - end[0], speed, unit)
         self.x = end[0]
         
         # Move in y-direction
         if (end[1] > self.y):
             self.turnTo(0)
-            self.moveForward(end[1] - self.y, speed)
+            self.moveForward(end[1] - self.y, speed, unit)
         elif (end[0] < self.x):
             self.turnTo(180)
-            self.moveForward(self.y - end[1], speed)
+            self.moveForward(self.y - end[1], speed, unit)
         self.y = end[1]
         
         return [self.x, self.y]
