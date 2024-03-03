@@ -9,8 +9,7 @@ robot = Robot(OUTPUT_D, OUTPUT_A)
 
 # Inputs
 y = int(input('Input the distance to travel (in): '))
-delay = int(input('Input the delay: '))
 
-sleep(delay)
-
-robot.moveForward(y, unit='in')
+for i in range(5):
+    temp = input('Press enter to continue')
+    robot.moveForward(y, unit='in')

@@ -9,10 +9,10 @@ robot = Robot(OUTPUT_D, OUTPUT_A)
 
 # Inputs
 y = int(input('Input the distance to travel after turning RIGHT (in): '))
-delay = int(input('Input the delay: '))
 
-sleep(delay)
 
-robot.moveForward(12, unit='in')
-robot.turn(90)
-robot.moveForward(y, unit='in')
+while True:
+    temp = input('Press enter to continue')
+    robot.moveForward(12, unit='in')
+    robot.turn(90)
+    robot.moveForward(y, unit='in')

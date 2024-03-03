@@ -1,19 +1,19 @@
 ### TODO ###
-# Let the robot turn counter-clockwise
 # Optimize how the robot decides to turn (clockwise or counter-clockwise) when given an angle
 # Optimize how the robot decides to move (forward or backward) when given an endpoint
+# Make the turning correction cleaner
 
 # Libraries
 from ev3dev2.motor import Motor, MoveTank, SpeedRPM
 from ev3dev2.sensor.lego import GyroSensor
 from ev3dev2.display import Display
+from time import sleep
 
 class Robot:
-    def __init__(self, leftMotorAddr: str, rightMotorAddr: str, gyroSensorAddr: str|None = None, cm_per_rotation: float = 17.5):
+    def __init__(self, leftMotorAddr: str, rightMotorAddr: str, cm_per_rotation: float = 17.5):
         '''Creates an object representing the robot'''
         self.leftMotorAddr = leftMotorAddr
         self.rightMotorAddr = rightMotorAddr
-        self.gyroSensorAddr = gyroSensorAddr
         self.cm_per_rotation = cm_per_rotation
 
         self.x = 0  # The coordinates of the robot (in cm)
@@ -23,7 +23,7 @@ class Robot:
         self.leftMotor = Motor(leftMotorAddr)
         self.rightMotor = Motor(rightMotorAddr)
         self.motors = MoveTank(leftMotorAddr, rightMotorAddr)
-        self.gyroSensor = GyroSensor(gyroSensorAddr)
+        self.gyroSensor = GyroSensor()
         self.disp = Display()
         return
         
@@ -45,16 +45,28 @@ class Robot:
                 self.leftMotor.on(speed)
                 self.rightMotor.on(-1 * speed)
         
-            ### UNTESTED ###
             # The robot will correct itself if it turns too far
-            # while (self.gyroSensor.angle > angle % 360):
-            #     self.leftMotor.on(-1 * speed)
-            #     self.rightMotor.on(speed)
+            while (self.gyroSensor.angle > angle):
+                self.leftMotor.on(-5)
+                self.rightMotor.on(5)
+            sleep(0.5)
+            while (self.gyroSensor.angle <= angle + 1):  # Idk why but the +1 helps
+                self.leftMotor.on(3)
+                self.rightMotor.on(-3)
         else:
             # Turns counter-clockwise if the angle is negative
             while (self.gyroSensor.angle >= angle):
                 self.leftMotor.on(-1 * speed)
                 self.rightMotor.on(speed)
+
+            # The robot will correct itself if it turns too far
+            while (self.gyroSensor.angle < angle):
+                self.leftMotor.on(5)
+                self.rightMotor.on(-5)
+            sleep(0.5)
+            while (self.gyroSensor.angle >= angle - 1):  # Idk why but the -1 helps
+                self.leftMotor.on(-3)
+                self.rightMotor.on(3)
     
         # Stops the motors
         self.leftMotor.stop()
@@ -77,8 +89,8 @@ class Robot:
     
     def moveForward(self, cm: float, speed = SpeedRPM(40), unit = 'cm'):
         '''
-        Moves the robot forward the specified distance in centimeters\n
-        Unit can be either 'cm' or 'in'
+        Moves the robot forward the specified distance\n
+        The default unit is centimeters, but it can also be set to inches (unit = 'in')
         '''
 
         dist = cm / self.cm_per_rotation
@@ -89,13 +101,26 @@ class Robot:
         return True
     
     def moveBackward(self, cm: float, speed = SpeedRPM(40), unit = 'cm'):
-        '''Moves the robot backwards the specified distance in centimeters'''
+        '''
+        Moves the robot backwards the specified distance\n
+        The default unit is centimeters, but it can also be set to inches (unit = 'in')
+        '''
+        
         self.moveForward(cm, speed, unit)
         return True
     
     ### UNTESTED ###
-    def moveTo(self, end: list[int] = [0, 0], speed = SpeedRPM(40), unit = 'cm'):
-        '''Moves the robot to a location on a coordinate grid - UNTESTED'''
+    def moveTo(self, end = [0, 0], speed = SpeedRPM(40), unit = 'cm'):
+        '''
+        -----UNTESTED-----\n
+        Moves the robot to a location on a coordinate grid\n
+        The default unit is centimeters, but it can also be set to inches (unit = 'in')
+        '''
+        # Converts the coordinates to centimeters if they are given in inches
+        if (unit == 'in'):
+            end[0] /= 2.54
+            end[1] /= 2.54
+        
         # Move in x-direction
         if (end[0] > self.x):
             self.turnTo(90)
