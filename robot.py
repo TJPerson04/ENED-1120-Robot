@@ -2,6 +2,13 @@
 # Optimize how the robot decides to turn (clockwise or counter-clockwise) when given an angle
 # Optimize how the robot decides to move (forward or backward) when given an endpoint
 # Make the turning correction cleaner
+# Make sure self.dir is always between 0-359
+
+### NOTES ###
+# Most of the time, the robot can move in the x-direction first, then the y-direction. Only when it is between shelves can it not do this
+# Any more complicated movements should be a series of multiple movements
+#    Maybe refactor this to make it better?
+#    Still prob just use a combination of how it moves now tho
 
 # Libraries
 from ev3dev2.motor import Motor, MoveTank, SpeedRPM
@@ -15,16 +22,29 @@ class Robot:
         self.leftMotorAddr = leftMotorAddr
         self.rightMotorAddr = rightMotorAddr
         self.cm_per_rotation = cm_per_rotation
+        self.in_per_rotation = self.cm_per_rotation * 0.393701
 
         self.x = 0  # The coordinates of the robot (in cm)
         self.y = 0
         self.dir = 0  # The direction the robot is facing (in degrees)
+        # 0 degrees is straight up in the positive y-direction
+        # This should always be between 0-359 (I don't think there is anything checking this rn)
 
         self.leftMotor = Motor(leftMotorAddr)
         self.rightMotor = Motor(rightMotorAddr)
         self.motors = MoveTank(leftMotorAddr, rightMotorAddr)
         self.gyroSensor = GyroSensor()
         self.disp = Display()
+
+        # Uncertainty
+        self.uncPerCm = 0
+        self.uncFromTurn = 0
+        self.uncX = 0
+        self.uncY = 0
+
+        # Aisles
+        self.y_aisles = []
+        self.x_aisles = []
         return
         
         
@@ -87,37 +107,39 @@ class Robot:
     
 
     
-    def moveForward(self, cm: float, speed = SpeedRPM(40), unit = 'cm'):
+    def moveForward(self, dist: float, speed = SpeedRPM(40), unit = 'in'):
         '''
         Moves the robot forward the specified distance\n
         The default unit is centimeters, but it can also be set to inches (unit = 'in')
         '''
 
-        dist = cm / self.cm_per_rotation
-        if (unit == 'in'):
-            dist = (cm * 2.54) / self.cm_per_rotation
+        if (unit == 'cm'):
+            dist /= self.cm_per_rotation
+        else:
+            dist /= self.in_per_rotation
         
         self.motors.on_for_rotations(speed, speed, dist, True)
         return True
     
-    def moveBackward(self, cm: float, speed = SpeedRPM(40), unit = 'cm'):
+    def moveBackward(self, dist: float, speed = SpeedRPM(40), unit = 'in'):
         '''
         Moves the robot backwards the specified distance\n
         The default unit is centimeters, but it can also be set to inches (unit = 'in')
         '''
         
-        self.moveForward(cm, speed, unit)
+        self.moveForward(dist, speed, unit)
         return True
     
     ### UNTESTED ###
-    def moveTo(self, end = [0, 0], speed = SpeedRPM(40), unit = 'cm'):
+    def moveTo(self, end = [0, 0], speed = SpeedRPM(40), unit = 'in'):
         '''
         -----UNTESTED-----\n
         Moves the robot to a location on a coordinate grid\n
-        The default unit is centimeters, but it can also be set to inches (unit = 'in')
+        The default unit is centimeters, but it can also be set to inches (unit = 'in')\n
+        It will move in the x-direction first, then the y-direction, the stop
         '''
-        # Converts the coordinates to centimeters if they are given in inches
-        if (unit == 'in'):
+        # Converts the coordinates to inches if they are given in centimeters
+        if (unit == 'cm'):
             end[0] /= 2.54
             end[1] /= 2.54
         
@@ -146,3 +168,36 @@ class Robot:
         '''Displays the given text at the given x, y location - UNDER CONSTRUCTION'''
         self.disp.text_grid(text, x=x, y=y)
         self.disp.update()
+
+    
+    def getcUncertainty(self, end = [0, 0]):
+        '''
+        Returns the range of error for the robot to move from where it is to end\n
+        end is a coordinate in the form [x, y]
+        '''
+        uncXMult = 1
+
+        # x-direction
+        # Check if the robot has to turn
+        if ((end[0] > self.x and self.dir != 90) or (end[0] < self.x and self.dir != 270)):
+            uncXMult = self.uncFromTurn
+        self.uncX += self.getUncStraightLine(abs(self.x - end[0])) * uncXMult
+
+        # y-direction (will have to turn)
+        self.uncY += self.getUncStraightLine(abs(self.y - end[1])) * self.uncFromTurn        
+
+
+        ### DESIGN ###
+        # X UNCERTAINTY
+        # Check if the robot needs to turn to move in the x-direction
+        #   If it does, add the turning uncertainty
+        # Add the uncertainty for moving in a straight line for the given distance
+        # 
+        # Y UNCERTAINTY
+        # Add the uncertainty for turning
+        # Add the uncertainty for moving in a straight line for the given distance
+
+
+    def getUncStraightLine(self, dist):
+        return dist * self.uncPerCm
+        
