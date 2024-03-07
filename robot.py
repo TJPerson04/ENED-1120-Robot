@@ -111,7 +111,7 @@ class Robot:
         if (self.dir == angle):
             return self.dir
         
-        self.turn(angle - self.dir, speed)
+        self.turn(self.dir - angle, speed)
         self.dir = angle  # Might be better to set self.dir to gyroSensor.angle and not reset the gyro sensor in self.turn, idk
         return self.dir
     
@@ -141,20 +141,24 @@ class Robot:
         return True
     
     def getNearestVertAisle(self, x):
-        min = self.vert_aisles[0]
+        aisle = self.vert_aisles[0]
+        min = abs(self.vert_aisles[0] - x)
         for val in self.vert_aisles:
             if (abs(val - x) < min):
-                min = val
-        
-        return min
+                aisle = val
+                min = abs(aisle - x)
+    
+        return aisle
     
     def getNearestHorizAisle(self, y):
-        min = self.horiz_aisles[0]
+        aisle = self.horiz_aisles[0]
+        min = abs(self.horiz_aisles[0] - y)
         for val in self.horiz_aisles:
             if (abs(val - y) < min):
-                min = val
+                aisle = val
+                min = abs(aisle - y)
 
-        return min
+        return aisle
     
     def moveToX(self, end = 0, speed = SpeedRPM(40), unit = 'in'):
         '''
@@ -247,14 +251,14 @@ class Robot:
             if (end > start):
                 if (dir == 0):
                     return None
-                elif (0 - dir < 0):  # I know that this is redundant, I'm keeping it for now b/c it mirrors the structure of the next part
+                elif (dir - 0 < 0):  # I know that this is redundant, I'm keeping it for now b/c it mirrors the structure of the next part
                     return 'l'
                 else:
                     return 'r'
             else:
                 if (dir == 180):
                     return None
-                elif (180 - dir < 0):
+                elif (dir - 180 < 0):
                     return 'l'
                 else:
                     return 'r'
@@ -265,14 +269,14 @@ class Robot:
             if (end > start):
                 if (dir == 90):
                     return None
-                elif (90 - dir < 0):
+                elif (dir - 90 < 0):
                     return 'l'
                 else:
                     return 'r'
             else:
                 if (dir == 270):
                     return None
-                elif (270 - dir < 0):
+                elif (dir - 270 < 0):
                     return 'l'
                 else:
                     return 'r'
@@ -349,13 +353,16 @@ class Robot:
     
     def updateUnc(self, end, axis = 'x'):
         dist = 0
+        dir = self.getDirNeedTurn(end, axis)
         if (axis == 'x'):
             dist = abs(self.x_plan - end)
             self.moveToXPlan(end)
         else:
             dist = abs(self.y_plan - end)
             self.moveToYPlan(end)
-        unc = self.getUncFromDist(dist, self.dir_plan, self.getDirNeedTurn(end, axis))
+        if (dist == 0):
+            return 0
+        unc = self.getUncFromDist(dist, self.dir_plan, dir)
         self.uncX += unc[0]
         self.uncY += unc[1]
 
@@ -373,7 +380,7 @@ class Robot:
         # Pathing Algorithm
         # Only simulates moving the robot so it can calculate uncertainty
         self.updateUnc(self.getNearestHorizAisle(self.y_plan), 'y')
-        if (self.getNearestHorizAisle(end[1]) != self.getNearestHorizAisle(self.y_plan)):
+        if (self.getNearestHorizAisle(end[1]) != self.getNearestHorizAisle(self.y_plan) and self.getNearestVertAisle(end[0]) != self.getNearestVertAisle(self.x_plan)):
             # Checks if there is an aisle between the robot and the end point
             # Only checking middle aisle b/c that's the only aisle that could be between two points
             isAisleBetween = (self.x_plan <= self.vert_aisles[1] and end[0] >= self.vert_aisles[1]) or (self.x_plan >= self.vert_aisles[1] and end[0] <= self.vert_aisles[1])

@@ -22,21 +22,25 @@ r['horiz_aisles'] = [6, 30, 54, 78, 102]  # These are the y-values for the horiz
 # Functions
 def getNearestVertAisle(x):
     global r
-    min = r['vert_aisles'][0]
+    aisle = r['vert_aisles'][0]
+    min = abs(r['vert_aisles'][0] - x)
     for val in r['vert_aisles']:
         if (abs(val - x) < min):
-            min = val
+            aisle = val
+            min = abs(aisle - x)
     
-    return min
+    return aisle
     
 def getNearestHorizAisle(y):
     global r
-    min = r['horiz_aisles'][0]
+    aisle = r['horiz_aisles'][0]
+    min = abs(r['horiz_aisles'][0] - y)
     for val in r['horiz_aisles']:
         if (abs(val - y) < min):
-            min = val
+            aisle = val
+            min = abs(aisle - y)
 
-    return min
+    return aisle
 
 
 def getDirNeedTurn(end = 0, axis = 'x', start = None, dir = None):
@@ -59,14 +63,14 @@ def getDirNeedTurn(end = 0, axis = 'x', start = None, dir = None):
         if (end > start):
             if (dir == 0):
                 return None
-            elif (0 - dir < 0):  # I know that this is redundant, I'm keeping it for now b/c it mirrors the structure of the next part
+            elif (dir - 0 < 0):  # I know that this is redundant, I'm keeping it for now b/c it mirrors the structure of the next part
                 return 'l'
             else:
                 return 'r'
         else:
             if (dir == 180):
                 return None
-            elif (180 - dir < 0):
+            elif (dir - 180 < 0):
                 return 'l'
             else:
                 return 'r'
@@ -77,14 +81,14 @@ def getDirNeedTurn(end = 0, axis = 'x', start = None, dir = None):
         if (end > start):
             if (dir == 90):
                 return None
-            elif (90 - dir < 0):
+            elif (dir - 90 < 0):
                 return 'l'
             else:
                 return 'r'
         else:
             if (dir == 270):
                 return None
-            elif (270 - dir < 0):
+            elif (dir - 270 < 0):
                 return 'l'
             else:
                 return 'r'
@@ -165,13 +169,16 @@ def moveToYPlan(end = 0, unit = 'in'):
 def updateUnc(end, axis = 'x'):
     global r
     dist = 0
+    dir = getDirNeedTurn(end, axis)
     if (axis == 'x'):
         dist = abs(r['x_plan'] - end)
         moveToXPlan(end)
     else:
         dist = abs(r['y_plan'] - end)
         moveToYPlan(end)
-    unc = getUncFromDist(dist, r['dir_plan'], getDirNeedTurn(end, axis))
+    if (dist == 0):
+        return 0
+    unc = getUncFromDist(dist, r['dir_plan'], dir)
     r['uncX'] += unc[0]
     r['uncY'] += unc[1]
 
@@ -190,7 +197,7 @@ def getUncertainty(end = [0, 0]):  # Kind of a mirror of moveTo, but using the p
     # Pathing Algorithm
     # Only simulates moving the robot to calculate uncertainty
     updateUnc(getNearestHorizAisle(r['y_plan']), 'y')
-    if (getNearestHorizAisle(end[1]) != getNearestHorizAisle(r['y_plan'])):
+    if (getNearestHorizAisle(end[1]) != getNearestHorizAisle(r['y_plan']) and getNearestVertAisle(end[0]) != getNearestVertAisle(r['x_plan'])):
         # Checks if there is an aisle between the robot and the end point
         # Only checking middle aisle b/c that's the only aisle that could be between two points
         isAisleBetween = (r['x_plan'] <= r['vert_aisles'][1] and end[0] >= r['vert_aisles'][1]) or (r['x_plan'] >= r['vert_aisles'][1] and end[0] <= r['vert_aisles'][1])
