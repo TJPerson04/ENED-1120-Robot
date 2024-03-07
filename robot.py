@@ -140,7 +140,8 @@ class Robot:
         self.moveForward(dist, speed, unit)
         return True
     
-    def getNearestVertAisle(self, x):
+    def getNearestVertAisle(self, x: int):
+        '''Returns the x-position of the vertical aisle closest to a given x-value'''
         aisle = self.vert_aisles[0]
         min = abs(self.vert_aisles[0] - x)
         for val in self.vert_aisles:
@@ -150,7 +151,8 @@ class Robot:
     
         return aisle
     
-    def getNearestHorizAisle(self, y):
+    def getNearestHorizAisle(self, y: int):
+        '''Returns the y-position of the horizontal aisle closest to a given y-value'''
         aisle = self.horiz_aisles[0]
         min = abs(self.horiz_aisles[0] - y)
         for val in self.horiz_aisles:
@@ -160,7 +162,7 @@ class Robot:
 
         return aisle
     
-    def moveToX(self, end = 0, speed = SpeedRPM(40), unit = 'in'):
+    def moveToX(self, end: int, speed = SpeedRPM(40), unit = 'in'):
         '''
         Moves the robot to a given x-coordinate\n
         If the end == robot.x, this will do nothing
@@ -180,7 +182,7 @@ class Robot:
         
         return self.x
     
-    def moveToY(self, end = 0, speed = SpeedRPM(40), unit = 'in'):
+    def moveToY(self, end: int, speed = SpeedRPM(40), unit = 'in'):
         '''
         Moves the robot to a given y-coordinate\n
         If the end == robot.y, this will do nothing
@@ -232,7 +234,7 @@ class Robot:
 
     
     # Prob a better way to do this
-    def getDirNeedTurn(self, end = 0, axis = 'x', start = None, dir = None):
+    def getDirNeedTurn(self, end: int, axis = 'x', start = None, dir = None):
         '''
         Given an end point and the axis ('x' or 'y'), will return the direction the robot needs to turn to get there (None, 'l', or 'r')
         '''
@@ -281,7 +283,7 @@ class Robot:
                 else:
                     return 'r'
     
-    def getUncFromDist(self, dist, dir, dirTurning = 'r', unit = 'in'):
+    def getUncFromDist(self, dist: int, dir: int, dirTurning = 'r', unit = 'in'):
         '''
         dir is the direction the robot will be facing\n
         dirTurning is 'l', 'r', or None
@@ -314,9 +316,10 @@ class Robot:
 
         return [xUnc, yUnc]
     
-    def moveToXPlan(self, end = 0, unit = 'in'):
+    def moveToXPlan(self, end: int, unit = 'in'):
         '''
-        Moves the robot to a given x-coordinate\n
+        Simulates moving the robot to a given x-coordinate\n
+        Doesn't actually move the robot, just updates self.y_plan and self.dir_plan\n
         If the end == robot.x, this will do nothing
         '''
         # Converts the coordinates to inches if they are given in centimeters
@@ -332,9 +335,9 @@ class Robot:
         
         return self.x_plan
     
-    def moveToYPlan(self, end = 0, unit = 'in'):
+    def moveToYPlan(self, end: int, unit = 'in'):
         '''
-        Plans to move the robot to a given y-coordinate\n
+        Simulates moving the robot to a given y-coordinate\n
         Doesn't actually move the robot, just updates self.y_plan and self.dir_plan\n
         If the end == robot.y, this will do nothing
         '''
@@ -351,7 +354,11 @@ class Robot:
 
         return self.y_plan
     
-    def updateUnc(self, end, axis = 'x'):
+    def updateUnc(self, end: int, axis = 'x'):
+        '''
+        Updates the necessary values to simulate the robot moving\n
+        Also updates the uncertainty predictions
+        '''
         dist = 0
         dir = self.getDirNeedTurn(end, axis)
         if (axis == 'x'):
