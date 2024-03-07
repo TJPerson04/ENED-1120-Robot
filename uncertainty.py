@@ -235,6 +235,11 @@ def getUncertainty(end = [0, 0]):  # Kind of a mirror of movement function, but 
         else:
             updateUnc(getNearestVertAisle(r['x_plan']), 'x')
         updateUnc(getNearestHorizAisle(end[1]), 'y')
+    elif (getNearestHorizAisle(end[1]) == getNearestHorizAisle(r['y_plan'])):
+        updateUnc(getNearestHorizAisle(r['y_plan']), 'y')
+    elif (getNearestVertAisle(end[0]) == getNearestVertAisle(r['x_plan'])):
+        updateUnc(getNearestVertAisle(r['x_plan']), 'x')
+        updateUnc(end[1], 'y')  # This is to make sure that the robot always alternates which direction it is moving (x, then y, then x, etc)
     updateUnc(end[0], 'x')
     updateUnc(end[1], 'y')
 

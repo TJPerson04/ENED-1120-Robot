@@ -214,9 +214,11 @@ class Robot:
         if (end == [self.x, self.y]): 
             return [self.x, self.y]
         
-        # Pathing algorithm
-        self.moveToY(self.getNearestHorizAisle(self.y), speed, unit)
-        if (self.getNearestHorizAisle(end[1]) != self.getNearestHorizAisle(self.y)):
+        offset = self.getUncertainty(end)
+
+        ### Pathing algorithm ###
+        if (self.getNearestHorizAisle(end[1]) != self.getNearestHorizAisle(self.y) and self.getNearestVertAisle(end[0]) != self.getNearestVertAisle(self.x_plan)):
+            self.moveToY(self.getNearestHorizAisle(self.y), speed, unit)
             # Checks if there is an aisle between the robot and the end point
             # Only checking middle aisle b/c that's the only aisle that could be between two points
             isAisleBetween = (self.x <= self.vert_aisles[1] and end[0] >= self.vert_aisles[1]) or (self.x >= self.vert_aisles[1] and end[0] <= self.vert_aisles[1])
@@ -225,7 +227,11 @@ class Robot:
             else:
                 self.moveTo(self.getNearestVertAisle(self.x), speed, unit)
             self.moveToY(self.getNearestHorizAisle(end[1]), speed, unit)
-            offset = self.getUncertainty(end)
+        elif (self.getNearestHorizAisle(end[1]) == self.getNearestHorizAisle(self.y)):
+            self.moveToY(self.getNearestHorizAisle(self.y), speed, unit)
+        elif (self.getNearestVertAisle(end[0]) == self.getNearestVertAisle(self.x)):
+            self.moveToX(self.getNearestVertAisle(self.x), speed, unit)
+            self.moveToY(end[1] + offset[1], speed, unit)  # This is to make sure that the robot always alternates which direction it is moving (x, then y, then x, etc)
         self.moveToX(end[0] + offset[0], speed, unit)
         self.moveToX(end[1] + offset[1], speed, unit)
 
@@ -384,10 +390,11 @@ class Robot:
         if (end == [self.x, self.y]):
             return [0, 0]
 
-        # Pathing Algorithm
+        ### Pathing Algorithm ###
         # Only simulates moving the robot so it can calculate uncertainty
-        self.updateUnc(self.getNearestHorizAisle(self.y_plan), 'y')
+        # Checks if the robot can just go straight to the end or not
         if (self.getNearestHorizAisle(end[1]) != self.getNearestHorizAisle(self.y_plan) and self.getNearestVertAisle(end[0]) != self.getNearestVertAisle(self.x_plan)):
+            self.updateUnc(self.getNearestHorizAisle(self.y_plan), 'y')
             # Checks if there is an aisle between the robot and the end point
             # Only checking middle aisle b/c that's the only aisle that could be between two points
             isAisleBetween = (self.x_plan <= self.vert_aisles[1] and end[0] >= self.vert_aisles[1]) or (self.x_plan >= self.vert_aisles[1] and end[0] <= self.vert_aisles[1])
@@ -396,6 +403,12 @@ class Robot:
             else:
                 self.updateUnc(self.getNearestVertAisle(self.x_plan), 'x')
             self.updateUnc(self.getNearestHorizAisle(end[1]), 'y')
+        elif (self.getNearestHorizAisle(end[1]) == self.getNearestHorizAisle(self.y_plan)):
+            self.updateUnc(self.getNearestHorizAisle(self.y_plan), 'y')
+        elif (self.getNearestVertAisle(end[0]) == self.getNearestVertAisle(self.x_plan)):
+            self.updateUnc(self.getNearestVertAisle(self.x_plan), 'x')
+            self.updateUnc(end[1], 'y')  # This is to make sure that the robot always alternates which direction it is moving (x, then y, then x, etc)
+
         self.updateUnc(end[0], 'x')
         self.updateUnc(end[1], 'y')
 
