@@ -1,17 +1,25 @@
-# Libraries
+### Libraries ###
 from math import pi, sin, cos
 
-# Variables
-# These are normally properties of the robot, hence the r_
+### Variables ###
+# In practice this is all defined in a robot class, 
+# but for singular testing purposes it is in its own file.
+# As a result, all the properties of the class have been changed
+# to values in an object (r)
 r = {}
+
+# Location and direction facing
 r['x'] = 6
 r['y'] = -6
-r['dir'] = 90
+r['dir'] = 90  # 90 is the y-axis, 0 is the x-axis
 
+# Also location and direction, but specifically for simulating movement, not actually where the robot is
+# These are exclusively used to calculate uncertainty
 r['x_plan'] = r['x']
 r['y_plan'] = r['y']
 r['dir_plan'] = r['dir']
 
+# Uncertainty trackers
 r['uncX'] = 0
 r['uncY'] = 0
 
@@ -19,9 +27,11 @@ r['uncY'] = 0
 r['vert_aisles'] = [6, 54, 102]  # These are the x-values for the veritcal aisles
 r['horiz_aisles'] = [6, 30, 54, 78, 102]  # These are the y-values for the horizontal aisles
 
-# Functions
-def getNearestVertAisle(x):
-    global r
+
+### Functions ###
+def getNearestVertAisle(x: int):
+    '''Returns the x-position of the vertical aisle closest to a given x-value'''
+    global r  # This is so the function can use the global object r, usually they would just use self. but that doesn't work in this independent file
     aisle = r['vert_aisles'][0]
     min = abs(r['vert_aisles'][0] - x)
     for val in r['vert_aisles']:
@@ -31,7 +41,8 @@ def getNearestVertAisle(x):
     
     return aisle
     
-def getNearestHorizAisle(y):
+def getNearestHorizAisle(y: int):
+    '''Returns the y-position of the horizontal aisle closest to a given y-value'''
     global r
     aisle = r['horiz_aisles'][0]
     min = abs(r['horiz_aisles'][0] - y)
@@ -43,9 +54,12 @@ def getNearestHorizAisle(y):
     return aisle
 
 
-def getDirNeedTurn(end = 0, axis = 'x', start = None, dir = None):
+def getDirNeedTurn(end: int, axis = 'x', start = None, dir = None):
     '''
-    Given an end point and the axis ('x' or 'y'), will return the direction the robot needs to turn to get there (None, 'l', or 'r')
+    Given an end point and the axis ('x' or 'y'), will return the direction the robot needs to turn to get there (None, 'l', or 'r')\n
+    start is the starting coordinate of the robot on the given axis\n
+    dir is the direction the robot is facing\n
+    By default this function will assume that it is following the simulated movement (x_plan, y_plan, dir_plan)
     '''
     global r
     if (start == None):
@@ -95,6 +109,8 @@ def getDirNeedTurn(end = 0, axis = 'x', start = None, dir = None):
     
 def getUncFromDist(dist, dir, dirTurning = 'r', unit = 'in'):
     '''
+    Calculates the expected error of the robot's position given the distance it travels\n
+    Also updates the global uncertainty trackers\n
     dir is the direction the robot will be facing\n
     dirTurning is 'l', 'r', or None
     '''
@@ -108,7 +124,7 @@ def getUncFromDist(dist, dir, dirTurning = 'r', unit = 'in'):
     
     xUncRel = 0
     yUncRel = 0
-    # These equations were determined in our test plan excel
+    # These equations were determined in our test plan excel from testing results
     # These are also relative to the robot (+x is forward and +y is to the right)
     if (dirTurning == 'r'):
         xUncRel = -0.0205 * dist - 0.019
@@ -116,7 +132,7 @@ def getUncFromDist(dist, dir, dirTurning = 'r', unit = 'in'):
     elif (dirTurning == 'l'):
         xUncRel = -0.0199 * dist + 0.419
         yUncRel = -0.0156 * dist + 1.6875
-    else:  # This is if the robot does not need to turn
+    else:  # This is if the robot does not need to turn (dirTurning == None)
         xUncRel = -0.0137 * dist - 0.0584
         yUncRel = 0.0238 * dist - 0.1775
     
@@ -129,7 +145,8 @@ def getUncFromDist(dist, dir, dirTurning = 'r', unit = 'in'):
 
 def moveToXPlan(end = 0, unit = 'in'):
     '''
-    Moves the robot to a given x-coordinate\n
+    Plans to move the robot to a given x-coordinate\n
+    Doesn't actually move the robot, just updates r_x_plan and r_dir_plan\n
     If the end == robot.x, this will do nothing
     '''
     global r
@@ -138,10 +155,13 @@ def moveToXPlan(end = 0, unit = 'in'):
         end[0] /= 2.54
         end[1] /= 2.54
 
+    # Determines what direction the robot needs to face to reach end
     if (end > r['x_plan']):
         r['dir_plan'] = 0
     elif (end < r['x_plan']):
         r['dir_plan'] = 180
+    
+    # Updates simulated location
     r['x_plan'] = end
     
     return r['x_plan']
@@ -158,15 +178,22 @@ def moveToYPlan(end = 0, unit = 'in'):
         end[0] /= 2.54
         end[1] /= 2.54
 
+    # Determines what direction the robot needs to face to reach end
     if (end > r['y_plan']):
         r['dir_plan'] = 90
     elif (end < r['y_plan']):
         r['dir_plan'] = 270
+    
+    # Updates simulated location
     r['y_plan'] = end
 
     return r['y_plan']
 
 def updateUnc(end, axis = 'x'):
+    '''
+    Updates the necessary values to simulate the robot moving\n
+    Also updates the uncertainty predictions
+    '''
     global r
     dist = 0
     dir = getDirNeedTurn(end, axis)
@@ -179,12 +206,13 @@ def updateUnc(end, axis = 'x'):
     if (dist == 0):
         return 0
     unc = getUncFromDist(dist, r['dir_plan'], dir)
+    
     r['uncX'] += unc[0]
     r['uncY'] += unc[1]
-
+    
     return unc
 
-def getUncertainty(end = [0, 0]):  # Kind of a mirror of moveTo, but using the pathing algorithm to calculate uncertainty, instead of actually moving
+def getUncertainty(end = [0, 0]):  # Kind of a mirror of movement function, but using the pathing algorithm to calculate uncertainty, instead of actually moving
     '''
     Returns the range of error for the robot to move from where it is to end\n
     end is a coordinate in the form [x, y]
@@ -194,10 +222,11 @@ def getUncertainty(end = [0, 0]):  # Kind of a mirror of moveTo, but using the p
     if (end == [r['x'], r['y']]):
         return [0, 0]
 
-    # Pathing Algorithm
+    ### Pathing Algorithm ###
     # Only simulates moving the robot to calculate uncertainty
-    updateUnc(getNearestHorizAisle(r['y_plan']), 'y')
+    # Checks if the robot can just go straight to the end or not
     if (getNearestHorizAisle(end[1]) != getNearestHorizAisle(r['y_plan']) and getNearestVertAisle(end[0]) != getNearestVertAisle(r['x_plan'])):
+        updateUnc(getNearestHorizAisle(r['y_plan']), 'y')
         # Checks if there is an aisle between the robot and the end point
         # Only checking middle aisle b/c that's the only aisle that could be between two points
         isAisleBetween = (r['x_plan'] <= r['vert_aisles'][1] and end[0] >= r['vert_aisles'][1]) or (r['x_plan'] >= r['vert_aisles'][1] and end[0] <= r['vert_aisles'][1])
