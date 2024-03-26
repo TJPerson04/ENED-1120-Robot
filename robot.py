@@ -421,7 +421,7 @@ class Robot:
         self.pickUpMotor.on_for_rotations(speed, 5)  # Prob change how long it's on for
         return True
     
-    def putDown(self, speed=SpeedRPM(40)):
+    def putDown(self, speed = SpeedRPM(40)):
         self.pickUpMotor.on_for_rotations(-1 * speed, 5)  # Prob change how long it's on for
         return True
     
