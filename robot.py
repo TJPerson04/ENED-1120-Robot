@@ -19,10 +19,11 @@ from time import sleep
 from math import sin, cos, pi
 
 class Robot:
-    def __init__(self, leftMotorAddr: str, rightMotorAddr: str, cm_per_rotation: float = 17.5):
+    def __init__(self, leftMotorAddr: str, rightMotorAddr: str, pickUpMotorAddr: str, cm_per_rotation: float = 17.5):
         '''Creates an object representing the robot'''
         self.leftMotorAddr = leftMotorAddr
         self.rightMotorAddr = rightMotorAddr
+        self.pickUpMotorAddr = pickUpMotorAddr
         self.cm_per_rotation = cm_per_rotation
         self.in_per_rotation = self.cm_per_rotation * 0.393701
 
@@ -40,6 +41,7 @@ class Robot:
 
         self.leftMotor = Motor(leftMotorAddr)
         self.rightMotor = Motor(rightMotorAddr)
+        self.pickUpMotor = Motor(pickUpMotorAddr)
         self.motors = MoveTank(leftMotorAddr, rightMotorAddr)
         self.gyroSensor = GyroSensor()
         self.disp = Display()
@@ -289,39 +291,6 @@ class Robot:
                 else:
                     return 'r'
     
-    def getUncFromDist(self, dist: int, dir: int, dirTurning = 'r', unit = 'in'):
-        '''
-        dir is the direction the robot will be facing\n
-        dirTurning is 'l', 'r', or None
-        '''
-        if (dist == 0):
-            return [0, 0]
-        
-        # Converts the distance to inches if it is given in centimeters
-        if (unit == 'cm'):
-            dist /= 2.54
-        
-        xUncRel = 0
-        yUncRel = 0
-        # These equations were determined in our test plan excel
-        # These are also relative to the robot (+x is forward and +y is to the right)
-        if (dirTurning == 'r'):
-            xUncRel = -0.0205 * dist - 0.019
-            yUncRel = 0.0023 * dist - 0.1168
-        elif (dirTurning == 'l'):
-            xUncRel = -0.0199 * dist + 0.419
-            yUncRel = -0.0156 * dist + 1.6875
-        else:  # This is if the robot does not need to turn
-            xUncRel = -0.0137 * dist - 0.0584
-            yUncRel = 0.0238 * dist - 0.1775
-        
-        # Convert from x,y relative to the robot to x,y in the coord grid
-        dirRad = dir * (pi / 180)
-        xUnc = xUncRel * cos(dirRad) + yUncRel * cos(dirRad - pi / 2)
-        yUnc = xUncRel * sin(dirRad) + yUncRel * sin(dirRad - pi / 2)
-
-        return [xUnc, yUnc]
-    
     def moveToXPlan(self, end: int, unit = 'in'):
         '''
         Simulates moving the robot to a given x-coordinate\n
@@ -359,6 +328,39 @@ class Robot:
         self.y_plan = end
 
         return self.y_plan
+    
+    def getUncFromDist(self, dist: int, dir: int, dirTurning = 'r', unit = 'in'):
+        '''
+        dir is the direction the robot will be facing\n
+        dirTurning is 'l', 'r', or None
+        '''
+        if (dist == 0):
+            return [0, 0]
+        
+        # Converts the distance to inches if it is given in centimeters
+        if (unit == 'cm'):
+            dist /= 2.54
+        
+        xUncRel = 0
+        yUncRel = 0
+        # These equations were determined in our test plan excel
+        # These are also relative to the robot (+x is forward and +y is to the right)
+        if (dirTurning == 'r'):
+            xUncRel = -0.0205 * dist - 0.019
+            yUncRel = 0.0023 * dist - 0.1168
+        elif (dirTurning == 'l'):
+            xUncRel = -0.0199 * dist + 0.419
+            yUncRel = -0.0156 * dist + 1.6875
+        else:  # This is if the robot does not need to turn
+            xUncRel = -0.0137 * dist - 0.0584
+            yUncRel = 0.0238 * dist - 0.1775
+        
+        # Convert from x,y relative to the robot to x,y in the coord grid
+        dirRad = dir * (pi / 180)
+        xUnc = xUncRel * cos(dirRad) + yUncRel * cos(dirRad - pi / 2)
+        yUnc = xUncRel * sin(dirRad) + yUncRel * sin(dirRad - pi / 2)
+
+        return [xUnc, yUnc]
     
     def updateUnc(self, end: int, axis = 'x'):
         '''
@@ -413,6 +415,15 @@ class Robot:
         self.updateUnc(end[1], 'y')
 
         return [self.uncX, self.uncY]
+    
+
+    def pickUp(self, speed = SpeedRPM(40)):
+        self.pickUpMotor.on_for_rotations(speed, 5)  # Prob change how long it's on for
+        return True
+    
+    def putDown(self, speed=SpeedRPM(40)):
+        self.pickUpMotor.on_for_rotations(-1 * speed, 5)  # Prob change how long it's on for
+        return True
     
 
     def displayText(self, text: str, x: int = 0, y: int = 0):
