@@ -4,16 +4,9 @@
 # Make the turning correction cleaner
 # Make sure self.dir is always between 0-359
 
-### NOTES ###
-# Most of the time, the robot can move in the x-direction first, then the y-direction. Only when it is between shelves can it not do this
-# Any more complicated movements should be a series of multiple movements
-#    Maybe refactor this to make it better?
-#    def make better, need to for model
-#    Still prob just use a combination of how it moves now tho
-
 # Libraries
 from ev3dev2.motor import Motor, MoveTank, SpeedRPM
-from ev3dev2.sensor.lego import GyroSensor
+from ev3dev2.sensor.lego import GyroSensor, UltrasonicSensor
 from ev3dev2.display import Display
 from time import sleep
 from math import sin, cos, pi
@@ -45,6 +38,10 @@ class Robot:
         self.motors = MoveTank(leftMotorAddr, rightMotorAddr)
         self.gyroSensor = GyroSensor()
         self.disp = Display()
+        try:
+            self.ultraSonicSensor = UltrasonicSensor()
+        except:
+            self.ultraSonicSensor = None
 
         # Uncertainty
         self.uncPerInX = 0
@@ -239,6 +236,19 @@ class Robot:
 
         
         return [self.x, self.y]
+    
+    def avoidObject(self, speed = SpeedRPM(40), unit = 'in'):
+        '''
+        -----UNTESTED-----\n
+        VERY rudimentary object avoidance\n
+        Will just kinda vaugley go around the object, regardless of the object's size
+        '''
+        self.moveTo([self.x + 20, self.y], speed, unit)
+        self.moveTo([self.x, self.y + 20], speed, unit)
+        self.moveTo([self.x - 20, self.y], speed, unit)
+
+        return [self.x, self.y]
+
 
     
     # Prob a better way to do this
@@ -391,6 +401,12 @@ class Robot:
 
         if (end == [self.x, self.y]):
             return [0, 0]
+        
+        # Resets values, just in case they don't already match up
+        # (Like if someone calls just this function and not moveTo)
+        self.y_plan = self.y
+        self.x_plan = self.x
+        self.dir_plan = self.dir
 
         ### Pathing Algorithm ###
         # Only simulates moving the robot so it can calculate uncertainty
@@ -424,7 +440,7 @@ class Robot:
     def putDown(self, speed = SpeedRPM(40)):
         self.pickUpMotor.on_for_rotations(-1 * speed, 5)  # Prob change how long it's on for
         return True
-    
+
 
     def displayText(self, text: str, x: int = 0, y: int = 0):
         '''Displays the given text at the given x, y location - UNDER CONSTRUCTION'''
