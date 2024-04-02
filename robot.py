@@ -4,15 +4,18 @@
 # Make the turning correction cleaner
 # Make sure self.dir is always between 0-359
 
+### IDEAS ###
+# Use ultrasonice sensor to determine how close the box is when picking up
+
 # Libraries
 from ev3dev2.motor import Motor, MoveTank, SpeedRPM
-from ev3dev2.sensor.lego import GyroSensor, UltrasonicSensor
+from ev3dev2.sensor.lego import GyroSensor, UltrasonicSensor, ColorSensor
 from ev3dev2.display import Display
 from time import sleep
 from math import sin, cos, pi
 
 class Robot:
-    def __init__(self, leftMotorAddr: str, rightMotorAddr: str, pickUpMotorAddr: str, cm_per_rotation: float = 17.5):
+    def __init__(self, leftMotorAddr: str, rightMotorAddr: str, pickUpMotorAddr: str, colorSensor1Addr: str, colorSensor2Addr: str, cm_per_rotation: float = 17.5):
         '''Creates an object representing the robot'''
         self.leftMotorAddr = leftMotorAddr
         self.rightMotorAddr = rightMotorAddr
@@ -32,16 +35,30 @@ class Robot:
         self.y_plan = self.y
         self.dir_plan = self.dir
 
-        self.leftMotor = Motor(leftMotorAddr)
-        self.rightMotor = Motor(rightMotorAddr)
-        self.pickUpMotor = Motor(pickUpMotorAddr)
-        self.motors = MoveTank(leftMotorAddr, rightMotorAddr)
-        self.gyroSensor = GyroSensor()
+        try: 
+            self.leftMotor = Motor(leftMotorAddr)
+            self.rightMotor = Motor(rightMotorAddr)
+            self.pickUpMotor = Motor(pickUpMotorAddr)
+            self.motors = MoveTank(leftMotorAddr, rightMotorAddr)
+            self.gyroSensor = GyroSensor()
+        except:
+            self.leftMotor = None
+            self.rightMotor = None
+            self.pickUpMotor = None
+            self.motors = None
+            self.gyroSensor = None
         self.disp = Display()
         try:
             self.ultraSonicSensor = UltrasonicSensor()
         except:
             self.ultraSonicSensor = None
+        try:
+            self.colorSensor1 = ColorSensor(colorSensor1Addr)
+            self.colorSensor2 = ColorSensor(colorSensor2Addr)
+        except:
+            self.colorSensor1 = None
+            self.colorSensor2 = None
+            print(':(')
 
         # Uncertainty
         self.uncPerInX = 0
@@ -440,6 +457,18 @@ class Robot:
     def putDown(self, speed = SpeedRPM(40)):
         self.pickUpMotor.on_for_rotations(-1 * speed, 5)  # Prob change how long it's on for
         return True
+    
+
+    def readBarcode(self):
+        '''
+        Constantly read the values from the color sensor and determine what barcode it is based on how many times the reading rapidly changes (moving vertically so will include the first 2 boxes of the horizontal hopefully)\n
+        Might need to come up w/ dif idea for reading horizontal barcode
+        '''
+        values = []
+        for i in range(40):
+            values.append(self.colorSensor1.reflected_light_intensity)
+            self.moveForward(0.1)
+        print(values)
 
 
     def displayText(self, text: str, x: int = 0, y: int = 0):
