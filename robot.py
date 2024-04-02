@@ -13,6 +13,7 @@ from ev3dev2.sensor.lego import GyroSensor, UltrasonicSensor, ColorSensor
 from ev3dev2.display import Display
 from time import sleep
 from math import sin, cos, pi
+from box import Box
 
 class Robot:
     def __init__(self, leftMotorAddr: str, rightMotorAddr: str, pickUpMotorAddr: str, colorSensor1Addr: str, colorSensor2Addr: str, cm_per_rotation: float = 17.5):
@@ -37,10 +38,14 @@ class Robot:
 
         try: 
             self.leftMotor = Motor(leftMotorAddr)
+            print("Left Motor Connected")
             self.rightMotor = Motor(rightMotorAddr)
+            print("Right Motor Connected")
             self.pickUpMotor = Motor(pickUpMotorAddr)
+            print("Pickup Motor Connected")
             self.motors = MoveTank(leftMotorAddr, rightMotorAddr)
             self.gyroSensor = GyroSensor()
+            print("Gyro Sensor Connected")
         except:
             self.leftMotor = None
             self.rightMotor = None
@@ -50,15 +55,17 @@ class Robot:
         self.disp = Display()
         try:
             self.ultraSonicSensor = UltrasonicSensor()
+            print("Ultrasonic Sensor Connected")
         except:
             self.ultraSonicSensor = None
         try:
             self.colorSensor1 = ColorSensor(colorSensor1Addr)
+            print("Color Sensor 1 Connected")
             self.colorSensor2 = ColorSensor(colorSensor2Addr)
+            print("Color Sensor 2 Connected")
         except:
             self.colorSensor1 = None
             self.colorSensor2 = None
-            print(':(')
 
         # Uncertainty
         self.uncPerInX = 0
@@ -462,13 +469,70 @@ class Robot:
     def readBarcode(self):
         '''
         Constantly read the values from the color sensor and determine what barcode it is based on how many times the reading rapidly changes (moving vertically so will include the first 2 boxes of the horizontal hopefully)\n
-        Might need to come up w/ dif idea for reading horizontal barcode
+        Might need to come up w/ dif idea for reading horizontal barcode\n
+        RECONFIGURE USING ACTUAL TEST BOX\n
+        I think there is an issue with my testing cardboard color being too close to white
         '''
         values = []
+        colors = []
+        output = ""
+        sum = 0
+        for i in range(5):
+            sum += self.colorSensor1.reflected_light_intensity
+        base = sum / 5  # Average
         for i in range(40):
-            values.append(self.colorSensor1.reflected_light_intensity)
             self.moveForward(0.1)
+            values.append(self.colorSensor1.reflected_light_intensity)
+            print(values[i])
+            if values[i] < base / 2:
+                colors.append("B")
+                output += "_"
+            elif values[i] < base:  # This feels like it should be values[i] > base, might be b/c of paper I used for testing
+                colors.append("W")
+                output += "-"
+            else:
+                colors.append("Brown")
+        
+        order = []
+        for i in range(len(colors)):
+            if (i == 0):
+                continue
+
+            if (colors[i] == colors[i - 1] and len(order) != 0 and colors[i]):
+                order[len(order) - 1][0] += 1
+            elif (colors[i] != "Brown"):
+                order.append([1, colors[i]])
+        print(base)
         print(values)
+        print(colors)
+        print(output)
+        print(order)
+
+        return order
+    
+    ### This code is gross, pls fix ###
+    def compareBarcodes(self, reading: list, barcode: list):
+        ROE = 2  # Range of error
+        LOS = 5  # Length of a section
+        isMatch = []
+        test = False
+        for i in range(len(reading)):
+            section = reading[i]
+            if (section[1] == barcode[0][1] and len(reading) - i >= len(barcode)):
+                for j in range(len(barcode)):
+                    isMatch.append(
+                        reading[i + j][1] == barcode[j][1] and  # Colors are the same
+                        reading[i + j][0] < (LOS + ROE) * barcode[j][0] and reading[i + j][0] > (LOS - ROE) * barcode[j][0]  # Numbers are within range
+                        )
+                test = True
+                for val in isMatch:
+                    if (not val):
+                        test = False
+                        break
+                if (test):
+                    break
+        
+        return test
 
 
     def displayText(self, text: str, x: int = 0, y: int = 0):
