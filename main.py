@@ -10,9 +10,9 @@ robot = Robot(OUTPUT_D, OUTPUT_B, OUTPUT_C, INPUT_1, INPUT_4)
 
 # Run any commands to the robot here
 POSSIBLE_BARCODES = [
-    [[3, 'W'], [1, 'B']], 
-    [[1, 'W'], [1, 'B'], [1, 'W'], [1, 'B']], 
-    [[2, 'W'], [2, 'B']],
+    [[1, 'B'], [3, 'W']], 
+    [[1, 'B'], [1, 'W'], [1, 'B'], [1, 'W']], 
+    [[2, 'B'], [2, 'W']],
     [[1, 'B'], [2, 'W'], [1, 'B']]
 ]
 test = robot.readBarcode()

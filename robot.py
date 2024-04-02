@@ -157,10 +157,10 @@ class Robot:
     def moveBackward(self, dist: float, speed = SpeedRPM(40), unit = 'in'):
         '''
         Moves the robot backwards the specified distance\n
-        The default unit is centimeters, but it can also be set to inches (unit = 'in')
+        The default unit is inches, but it can also be set to centimeters (unit = 'cm')
         '''
         
-        self.moveForward(dist, speed, unit)
+        self.moveForward(dist, -1 * speed, unit)
         return True
     
     def getNearestVertAisle(self, x: int):
@@ -478,20 +478,22 @@ class Robot:
         output = ""
         sum = 0
         for i in range(5):
-            sum += self.colorSensor1.reflected_light_intensity
+            sum += self.colorSensor2.reflected_light_intensity
         base = sum / 5  # Average
+        self.moveBackward(4, SpeedRPM(20))
         for i in range(40):
             self.moveForward(0.1)
-            values.append(self.colorSensor1.reflected_light_intensity)
+            values.append(self.colorSensor2.reflected_light_intensity)
             print(values[i])
-            if values[i] < base / 2:
+            if values[i] < base / 2 and values[i] != 0:
                 colors.append("B")
                 output += "_"
-            elif values[i] < base:  # This feels like it should be values[i] > base, might be b/c of paper I used for testing
+            elif values[i] > base:  # This feels like it should be values[i] > base, might be b/c of paper I used for testing
                 colors.append("W")
                 output += "-"
             else:
                 colors.append("Brown")
+                output += "?"
         
         order = []
         for i in range(len(colors)):
@@ -512,7 +514,7 @@ class Robot:
     
     ### This code is gross, pls fix ###
     def compareBarcodes(self, reading: list, barcode: list):
-        ROE = 2  # Range of error
+        ROE = 2.5  # Range of error
         LOS = 5  # Length of a section
         isMatch = []
         test = False
