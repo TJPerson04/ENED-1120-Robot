@@ -9,8 +9,8 @@ from math import pi, sin, cos
 r = {}
 
 # Location and direction facing
-r['x'] = 6
-r['y'] = -6
+r['x'] = 30  # The current x-coordinate of the robot
+r['y'] = 54  # The current y-coordinate of the robot
 r['dir'] = 90  # 90 is the y-axis, 0 is the x-axis
 
 # Also location and direction, but specifically for simulating movement, not actually where the robot is
@@ -106,42 +106,6 @@ def getDirNeedTurn(end: int, axis = 'x', start = None, dir = None):
                 return 'l'
             else:
                 return 'r'
-    
-def getUncFromDist(dist, dir, dirTurning = 'r', unit = 'in'):
-    '''
-    Calculates the expected error of the robot's position given the distance it travels\n
-    Also updates the global uncertainty trackers\n
-    dir is the direction the robot will be facing\n
-    dirTurning is 'l', 'r', or None
-    '''
-    global r
-    if (dist == 0):
-        return [0, 0]
-    
-    # Converts the distance to inches if it is given in centimeters
-    if (unit == 'cm'):
-        dist /= 2.54
-    
-    xUncRel = 0
-    yUncRel = 0
-    # These equations were determined in our test plan excel from testing results
-    # These are also relative to the robot (+x is forward and +y is to the right)
-    if (dirTurning == 'r'):
-        xUncRel = -0.0205 * dist - 0.019
-        yUncRel = 0.0023 * dist - 0.1168
-    elif (dirTurning == 'l'):
-        xUncRel = -0.0199 * dist + 0.419
-        yUncRel = -0.0156 * dist + 1.6875
-    else:  # This is if the robot does not need to turn (dirTurning == None)
-        xUncRel = -0.0137 * dist - 0.0584
-        yUncRel = 0.0238 * dist - 0.1775
-    
-    # Convert from x,y relative to the robot to x,y in the coord grid
-    dirRad = dir * (pi / 180)
-    xUnc = xUncRel * cos(dirRad) + yUncRel * cos(dirRad - pi / 2)
-    yUnc = xUncRel * sin(dirRad) + yUncRel * sin(dirRad - pi / 2)
-
-    return [xUnc, yUnc]
 
 def moveToXPlan(end = 0, unit = 'in'):
     '''
@@ -188,6 +152,42 @@ def moveToYPlan(end = 0, unit = 'in'):
     r['y_plan'] = end
 
     return r['y_plan']
+
+def getUncFromDist(dist, dir, dirTurning = 'r', unit = 'in'):
+    '''
+    Calculates the expected error of the robot's position given the distance it travels\n
+    Also updates the global uncertainty trackers\n
+    dir is the direction the robot will be facing\n
+    dirTurning is 'l', 'r', or None
+    '''
+    global r
+    if (dist == 0):
+        return [0, 0]
+    
+    # Converts the distance to inches if it is given in centimeters
+    if (unit == 'cm'):
+        dist /= 2.54
+    
+    xUncRel = 0
+    yUncRel = 0
+    # These equations were determined in our test plan excel from testing results
+    # These are also relative to the robot (+x is forward and +y is to the right)
+    if (dirTurning == 'r'):
+        xUncRel = -0.0205 * dist - 0.019
+        yUncRel = 0.0023 * dist - 0.1168
+    elif (dirTurning == 'l'):
+        xUncRel = -0.0199 * dist + 0.419
+        yUncRel = -0.0156 * dist + 1.6875
+    else:  # This is if the robot does not need to turn (dirTurning == None)
+        xUncRel = -0.0137 * dist - 0.0584
+        yUncRel = 0.0238 * dist - 0.1775
+    
+    # Convert from x,y relative to the robot to x,y in the coord grid
+    dirRad = dir * (pi / 180)
+    xUnc = xUncRel * cos(dirRad) + yUncRel * cos(dirRad - pi / 2)
+    yUnc = xUncRel * sin(dirRad) + yUncRel * sin(dirRad - pi / 2)
+
+    return [xUnc, yUnc]
 
 def updateUnc(end, axis = 'x'):
     '''
