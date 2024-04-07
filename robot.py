@@ -82,7 +82,8 @@ class Robot:
         
         
 
-    def turn(self, angle: int, speed = SpeedRPM(40)):
+    def turn(self, angle: int, speed = SpeedRPM(20)):
+        speed = SpeedRPM(10)
         '''Turn the robot the specified number of degrees clockwise'''
         # Zeros the gyro sensor
         self.gyroSensor.reset()
@@ -150,8 +151,16 @@ class Robot:
             dist /= self.cm_per_rotation
         else:
             dist /= self.in_per_rotation
-        
+
         self.motors.on_for_rotations(speed, speed, dist, True)
+
+        # distGone = 0
+
+        # while (distGone < dist):
+        #     self.motors.on_for_rotations(speed, speed, 0.1, True)
+        #     distGone += 0.1
+        #     if (self.ultraSonicSensor.distance_inches <= 3):
+        #         self.avoidObject()
         return True
     
     def moveBackward(self, dist: float, speed = SpeedRPM(40), unit = 'in'):
@@ -241,22 +250,29 @@ class Robot:
 
         ### Pathing algorithm ###
         if (self.getNearestHorizAisle(end[1]) != self.getNearestHorizAisle(self.y) and self.getNearestVertAisle(end[0]) != self.getNearestVertAisle(self.x_plan)):
+            print(1)
             self.moveToY(self.getNearestHorizAisle(self.y), speed, unit)
             # Checks if there is an aisle between the robot and the end point
             # Only checking middle aisle b/c that's the only aisle that could be between two points
             isAisleBetween = (self.x <= self.vert_aisles[1] and end[0] >= self.vert_aisles[1]) or (self.x >= self.vert_aisles[1] and end[0] <= self.vert_aisles[1])
             if (isAisleBetween):
+                print(2)
                 self.moveToX(self.vert_aisles[1], speed, unit)
             else:
+                print(3)
                 self.moveTo(self.getNearestVertAisle(self.x), speed, unit)
+            print(4)
             self.moveToY(self.getNearestHorizAisle(end[1]), speed, unit)
         elif (self.getNearestHorizAisle(end[1]) == self.getNearestHorizAisle(self.y)):
+            print(5)
             self.moveToY(self.getNearestHorizAisle(self.y), speed, unit)
         elif (self.getNearestVertAisle(end[0]) == self.getNearestVertAisle(self.x)):
             self.moveToX(self.getNearestVertAisle(self.x), speed, unit)
             self.moveToY(end[1] + offset[1], speed, unit)  # This is to make sure that the robot always alternates which direction it is moving (x, then y, then x, etc)
+        print(self.getNearestVertAisle(end[0]))
+        print(self.getNearestVertAisle(self.x))
+        self.moveToY(end[1] + offset[1], speed, unit)
         self.moveToX(end[0] + offset[0], speed, unit)
-        self.moveToX(end[1] + offset[1], speed, unit)
 
         
         return [self.x, self.y]
@@ -267,9 +283,9 @@ class Robot:
         VERY rudimentary object avoidance\n
         Will just kinda vaugley go around the object, regardless of the object's size
         '''
-        self.moveTo([self.x + 20, self.y], speed, unit)
-        self.moveTo([self.x, self.y + 20], speed, unit)
-        self.moveTo([self.x - 20, self.y], speed, unit)
+        self.moveTo([self.x + 15, self.y], speed, unit)
+        self.moveTo([self.x, self.y + 15], speed, unit)
+        self.moveTo([self.x - 15, self.y], speed, unit)
 
         return [self.x, self.y]
 
@@ -458,11 +474,11 @@ class Robot:
     
 
     def pickUp(self, speed = SpeedRPM(40)):
-        self.pickUpMotor.on_for_rotations(speed, 5)  # Prob change how long it's on for
+        self.pickUpMotor.on_for_rotations(100, 0.25)  # Prob change how long it's on for
         return True
     
     def putDown(self, speed = SpeedRPM(40)):
-        self.pickUpMotor.on_for_rotations(-1 * speed, 5)  # Prob change how long it's on for
+        self.pickUpMotor.on_for_rotations(-100, 5)  # Prob change how long it's on for
         return True
     
 
@@ -488,7 +504,7 @@ class Robot:
             if values[i] < base / 2 and values[i] != 0:
                 colors.append("B")
                 output += "_"
-            elif values[i] > base:  # This feels like it should be values[i] > base, might be b/c of paper I used for testing
+            elif values[i] < base:  # This feels like it should be values[i] > base, might be b/c of paper I used for testing
                 colors.append("W")
                 output += "-"
             else:
@@ -504,11 +520,11 @@ class Robot:
                 order[len(order) - 1][0] += 1
             elif (colors[i] != "Brown"):
                 order.append([1, colors[i]])
-        print(base)
-        print(values)
-        print(colors)
+        # print(base)
+        # print(values)
+        # print(colors)
         print(output)
-        print(order)
+        # print(order)
 
         return order
     
@@ -535,6 +551,30 @@ class Robot:
                     break
         
         return test
+    
+    def getBoxType(self):
+        POSSIBLE_BARCODES = [
+            [[1, 'B'], [3, 'W']], 
+            [[1, 'B'], [1, 'W'], [1, 'B'], [1, 'W']],
+            [[2, 'B'], [2, 'W']],
+            [[1, 'B'], [2, 'W'], [1, 'B']]
+        ]
+        test = self.readBarcode()
+
+        i = 0
+        results = []
+        for code in POSSIBLE_BARCODES:
+            results.append(self.compareBarcodes(test, code))
+        
+        if (not True in results):
+            return -1
+        
+        boxType = 1
+        for i in range(len(results)):
+            if (results[i] and len(POSSIBLE_BARCODES[i]) > len(POSSIBLE_BARCODES[boxType - 1])):
+                boxType = i + 1
+        
+        return boxType
 
 
     def displayText(self, text: str, x: int = 0, y: int = 0):
