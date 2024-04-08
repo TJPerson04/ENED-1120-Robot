@@ -17,3 +17,8 @@ class Track:
             s = Shelf(shelf[0], shelf[1])
             for i in range(len(s.boxLocations)):
                 self.BOX_COORDS[s.name + "_" + str(i + 1)] = s.boxLocations[i]
+        
+        self.homeA = [6, -6]
+        self.homeB = [102, -6]
+        self.homeC = [6, 114]
+        self.homeD = [102, 114]
