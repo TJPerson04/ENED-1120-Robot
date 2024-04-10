@@ -6,6 +6,9 @@ from track import Track
 from ev3dev2.motor import OUTPUT_A, OUTPUT_B, OUTPUT_C, OUTPUT_D
 from ev3dev2.sensor import INPUT_1, INPUT_2, INPUT_4
 from time import sleep
+from ev3dev2.display import Display
+import ev3dev2.fonts as fonts
+from ev3dev2.sound import Sound
 
 # Initialize robot
 robot = Robot(OUTPUT_D, OUTPUT_B, OUTPUT_C, INPUT_2, INPUT_4)
@@ -42,3 +45,38 @@ temp = input("Press Enter To Continue")
 #     sleep(5)
 # except:
 #     print('Error: Invalid input')
+disp = Display()
+# disp.text_grid("Box Type: " + str(1) + " - MATCH", font=, text_color='green')
+# disp.draw.text((10, 10), "Box Type: " + str(1) + "\nMATCH", font=fonts.load('luBS24'))
+disp.text_grid("Box Type: " + str(1) + "\nNOT A MATCH\nGiven:  " + str(2), text_color='red', font=fonts.load("luBS24"))
+
+disp.update()
+
+robot.pickUp()
+
+spkr = Sound()
+spkr.play_song((
+    ('D4', 'e3'),      # intro anacrouse
+    ('D4', 'e3'),
+    ('D4', 'e3'),
+    ('G4', 'h'),       # meas 1
+    ('D5', 'h'),
+    ('C5', 'e3'),      # meas 2
+    ('B4', 'e3'),
+    ('A4', 'e3'),
+    ('G5', 'h'),
+    ('D5', 'q'),
+    ('C5', 'e3'),      # meas 3
+    ('B4', 'e3'),
+    ('A4', 'e3'),
+    ('G5', 'h'),
+    ('D5', 'q'),
+    ('C5', 'e3'),      # meas 4
+    ('B4', 'e3'),
+    ('C5', 'e3'),
+    ('A4', 'h.'),
+), 200, 0.01)
+
+robot.moveForward(12)
+robot.putDown()
+sleep(5)

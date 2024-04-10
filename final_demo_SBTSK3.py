@@ -25,13 +25,14 @@ disp = Display()
 disp.text_grid("This box is type", boxType)
 
 if (boxType == givenBoxType):
-    disp.text_grid("Box Type:", boxType, "- MATCH")
+    disp.text_grid("Box Type: " + str(boxType) + "\nMATCH", text_color='green')
     # I really want to play a fun sound here
     # I also really want a cooler display for if the codes match or not
     # Maybe like display the barcode
     # Or if I can do colors do green for match and red for not match
 else:
-    disp.text_grid("Box Type:", boxType, "- DOES NOT MATCH TYPE", givenBoxType)
+    disp.text_grid("Box Type: " + str(boxType) + "\nDOES NOT MATCH\nGiven:  " + str(givenBoxType), text_color='red')
+disp.update()
 
 ### SUBTASK 4 ###
 isCont = input("Are you continuing to subtask 2 (y/n)? ")

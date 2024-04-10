@@ -152,13 +152,13 @@ class Robot:
         else:
             dist /= self.in_per_rotation
 
-        # self.motors.on_for_rotations(speed, speed, dist, True)
+        self.motors.on_for_rotations(speed, speed, dist, True)
         ### UNTESTED ###
-        self.motors.run_to_rel_pos(dist * self.leftMotor.count_per_rot)
-        while (self.motors._is_state(self.motors, 'running')):
-            while (self.ultraSonicSensor.distance_centimeters > 100):
-                self.motors.stop()
-            self.motors.on(speed, speed)
+        # self.motors.run_to_rel_pos(dist * self.leftMotor.count_per_rot)
+        # while (self.motors._is_state(self.motors, 'running')):
+        #     while (self.ultraSonicSensor.distance_centimeters > 100):
+        #         self.motors.stop()
+        #     self.motors.on(speed, speed)
         ### UNTESTED ###
 
         # distGone = 0
@@ -481,11 +481,11 @@ class Robot:
     
 
     def pickUp(self, speed = SpeedRPM(40)):
-        self.pickUpMotor.on_for_rotations(100, 0.25)  # Prob change how long it's on for
+        self.pickUpMotor.on_for_rotations(100, 0.5)  # Prob change how long it's on for
         return True
     
     def putDown(self, speed = SpeedRPM(40)):
-        self.pickUpMotor.on_for_rotations(-100, 5)  # Prob change how long it's on for
+        self.pickUpMotor.on_for_rotations(-100, 0.5)  # Prob change how long it's on for
         return True
     
 
