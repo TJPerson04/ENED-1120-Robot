@@ -1,5 +1,5 @@
-### FINAL DEMO SUBTASK 1 ###
 #!/usr/bin/env python3
+### FINAL DEMO SUBTASK 1 ###
 
 #Libraries
 from robot import Robot
@@ -17,9 +17,13 @@ track = Track()
 label = input("Please enter the label of the box: ")
 box = Box(1, label)
 
+box.location[1] -= 3
+
+print('Moving to', box.location)
+
 robot.moveTo(box.location)
 sleep(5)
-robot.moveTo(track.homeB)
+# robot.moveTo(track.homeB)
 
 ### SUBTASK 2 ###
 isCont = input("Are you continuing to subtask 2 (y/n)? ")

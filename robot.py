@@ -149,18 +149,18 @@ class Robot:
     
 
     
-    def onForRotations(self, speed, rotation):
+    def onForRotations(self, speed, rotation, stopWhenObj = True):
         ''' TESTING'''
         self.leftMotor.reset()
         self.motors.on(speed, speed)
-        while self.leftMotor.position / self.leftMotor.count_per_rot < rotation:
-            if (self.ultraSonicSensor.distance_centimeters < 20):
+        while abs(self.leftMotor.position / self.leftMotor.count_per_rot) < rotation:
+            if (self.ultraSonicSensor.distance_centimeters < 20 and stopWhenObj):
                 self.motors.off()
                 sleep(5)
                 self.motors.on(speed, speed)
         self.motors.off()
 
-    def moveForward(self, dist: float, speed = SpeedRPM(40), unit = 'in'):
+    def moveForward(self, dist: float, speed = SpeedRPM(40), unit = 'in', stopWhenObj = True):
         '''
         Moves the robot forward the specified distance\n
         The default unit is centimeters, but it can also be set to inches (unit = 'in')
@@ -172,7 +172,7 @@ class Robot:
             dist /= self.in_per_rotation
 
         # self.motors.on_for_rotations(speed, speed, dist, True)
-        self.onForRotations(speed, dist)
+        self.onForRotations(speed, dist, stopWhenObj)
         ### UNTESTED ###
         # self.motors.run_to_rel_pos(dist * self.leftMotor.count_per_rot)
         # while (self.motors._is_state(self.motors, 'running')):
@@ -196,7 +196,7 @@ class Robot:
         The default unit is inches, but it can also be set to centimeters (unit = 'cm')
         '''
         
-        self.moveForward(dist, -1 * speed, unit)
+        self.moveForward(dist, -1 * speed, unit, False)
         return True
     
     def getNearestVertAisle(self, x: int):
@@ -501,7 +501,7 @@ class Robot:
     
 
     def pickUp(self, speed = SpeedRPM(40)):
-        self.pickUpMotor.on_for_rotations(100, 0.5)  # Prob change how long it's on for
+        self.pickUpMotor.on_for_rotations(100, 0.75)  # Prob change how long it's on for
         return True
     
     def putDown(self, speed = SpeedRPM(40)):
@@ -524,8 +524,8 @@ class Robot:
             sum += self.colorSensor2.reflected_light_intensity
         base = sum / 5  # Average
         self.moveBackward(4, SpeedRPM(20))
-        for i in range(40):
-            self.moveForward(0.1)
+        for i in range(35):
+            self.moveForward(0.05)
             values.append(self.colorSensor2.reflected_light_intensity)
             print(values[i])
             if values[i] < base / 2 and values[i] != 0:
@@ -543,22 +543,22 @@ class Robot:
             if (i == 0):
                 continue
 
-            if (colors[i] == colors[i - 1] and len(order) != 0 and colors[i]):
+            if (len(order) != 0 and colors[i] == order[len(order) - 1][1] and colors[i]):
                 order[len(order) - 1][0] += 1
             elif (colors[i] != "Brown"):
                 order.append([1, colors[i]])
         # print(base)
         # print(values)
-        # print(colors)
+        print(colors)
         print(output)
-        # print(order)
+        print(order)
 
         return order
     
     ### This code is gross, pls fix ###
     def compareBarcodes(self, reading: list, barcode: list):
-        ROE = 2.5  # Range of error
-        LOS = 5  # Length of a section
+        ROE = 3  # Range of error
+        LOS = 6  # Length of a section
         isMatch = []
         test = False
         for i in range(len(reading)):
@@ -598,7 +598,7 @@ class Robot:
         
         boxType = 1
         for i in range(len(results)):
-            if (results[i] and len(POSSIBLE_BARCODES[i]) > len(POSSIBLE_BARCODES[boxType - 1])):
+            if (results[i] and len(POSSIBLE_BARCODES[i]) >= len(POSSIBLE_BARCODES[boxType - 1])):
                 boxType = i + 1
         
         return boxType

@@ -1,5 +1,5 @@
-### FINAL DEMO SUBTASK 4 ###
 #!/usr/bin/env python3
+### FINAL DEMO SUBTASK 4 ###
 
 #Libraries
 from robot import Robot
