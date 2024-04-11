@@ -13,7 +13,8 @@ from ev3dev2.sensor.lego import GyroSensor, UltrasonicSensor, ColorSensor
 from ev3dev2.display import Display
 from time import sleep
 from math import sin, cos, pi
-from box import Box
+from ev3dev2.led import Leds
+from ev3dev2.sound import Sound
 
 class Robot:
     def __init__(self, leftMotorAddr: str, rightMotorAddr: str, pickUpMotorAddr: str, colorSensor1Addr: str, colorSensor2Addr: str, cm_per_rotation: float = 17.5):
@@ -56,13 +57,20 @@ class Robot:
         try:
             self.ultraSonicSensor = UltrasonicSensor()
             print("Ultrasonic Sensor Connected")
+            self.leds = Leds()
+            self.leds.all_off()
+            print("LEDs Connected ")
+            self.spkr = Sound()
+            print("Speaker Connected")
         except:
             self.ultraSonicSensor = None
+            self.leds = None
+            self.spkr = None
         try:
             self.colorSensor1 = ColorSensor(colorSensor1Addr)
             print("Color Sensor 1 Connected")
             self.colorSensor2 = ColorSensor(colorSensor2Addr)
-            print("Color Sensor 2 Connected")
+            print("Color Sensor 2 Connected")            
         except:
             self.colorSensor1 = None
             self.colorSensor2 = None
@@ -141,6 +149,17 @@ class Robot:
     
 
     
+    def onForRotations(self, speed, rotation):
+        ''' TESTING'''
+        self.leftMotor.reset()
+        self.motors.on(speed, speed)
+        while self.leftMotor.position / self.leftMotor.count_per_rot < rotation:
+            if (self.ultraSonicSensor.distance_centimeters < 20):
+                self.motors.off()
+                sleep(5)
+                self.motors.on(speed, speed)
+        self.motors.off()
+
     def moveForward(self, dist: float, speed = SpeedRPM(40), unit = 'in'):
         '''
         Moves the robot forward the specified distance\n
@@ -152,7 +171,8 @@ class Robot:
         else:
             dist /= self.in_per_rotation
 
-        self.motors.on_for_rotations(speed, speed, dist, True)
+        # self.motors.on_for_rotations(speed, speed, dist, True)
+        self.onForRotations(speed, dist)
         ### UNTESTED ###
         # self.motors.run_to_rel_pos(dist * self.leftMotor.count_per_rot)
         # while (self.motors._is_state(self.motors, 'running')):
@@ -583,8 +603,14 @@ class Robot:
         
         return boxType
 
+    
+    def setLight(self, color: str):
+        '''``color`` can either be "green" or "red"'''
+        self.leds.set_color('RIGHT', color.upper())
+        self.leds.set_color('LEFT', color.upper())
 
-    def displayText(self, text: str, x: int = 0, y: int = 0):
-        '''Displays the given text at the given x, y location - UNDER CONSTRUCTION'''
-        self.disp.text_grid(text, x=x, y=y)
-        self.disp.update()
+    def flashLight(self, color: str):
+        '''``color`` can either be "green" or "red"'''
+        self.setLight(color)
+        sleep(5)
+        self.leds.all_off()

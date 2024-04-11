@@ -9,10 +9,13 @@ from track import Track
 from ev3dev2.motor import OUTPUT_B, OUTPUT_C, OUTPUT_D
 from ev3dev2.sensor import INPUT_2, INPUT_4
 from ev3dev2.display import Display
+from ev3dev2.sound import Sound
 from time import sleep
 
 # Initialize robot and track
 robot = Robot(OUTPUT_D, OUTPUT_B, OUTPUT_C, INPUT_2, INPUT_4)
+disp = Display()
+spkr = Sound()
 track = Track()
 
 givenBoxType = input("Please Enter the Box Type: ")
@@ -21,18 +24,18 @@ givenBoxType = input("Please Enter the Box Type: ")
 robot.moveForward(15)  # TEST THIS
 boxType = robot.getBoxType()
 
-disp = Display()
 disp.text_grid("This box is type", boxType)
 
 if (boxType == givenBoxType):
     disp.text_grid("Box Type: " + str(boxType) + "\nMATCH", text_color='green')
-    # I really want to play a fun sound here
-    # I also really want a cooler display for if the codes match or not
-    # Maybe like display the barcode
-    # Or if I can do colors do green for match and red for not match
+    disp.update()
+    robot.spkr.play_file('./code/icarly_cheers_ev3.wav', play_type=robot.spkr.PLAY_NO_WAIT_FOR_COMPLETE)
+    robot.flashLight("Green")
 else:
     disp.text_grid("Box Type: " + str(boxType) + "\nDOES NOT MATCH\nGiven:  " + str(givenBoxType), text_color='red')
-disp.update()
+    disp.update()
+    robot.spkr.play_file('./code/buzzer_ev3.wav', play_type=robot.spkr.PLAY_NO_WAIT_FOR_COMPLETE)
+    robot.flashLight("red")
 
 ### SUBTASK 4 ###
 isCont = input("Are you continuing to subtask 2 (y/n)? ")
