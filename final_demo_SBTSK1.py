@@ -17,7 +17,7 @@ track = Track()
 label = input("Please enter the label of the box: ")
 box = Box(1, label)
 
-box.location[1] -= 3
+box.location[1] -= 2.5
 
 print('Moving to', box.location)
 

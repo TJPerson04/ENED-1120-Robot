@@ -17,7 +17,7 @@ temp = input("Press Enter to Continue")
 
 # Run any commands to the robot here
 robot.turnTo(90)
-robot.moveForward(3)
+robot.moveForward(3, stopWhenObj=False)
 robot.pickUp()
 robot.moveBackward(3)
 robot.turnTo(0)

@@ -25,6 +25,7 @@ givenBoxType = input("Please Enter the Box Type: ")
 boxType = robot.getBoxType()
 
 if (boxType == -1):
+    robot.moveForward(1)
     boxType = robot.getBoxType()
 
 disp.text_grid("This box is type", boxType)
