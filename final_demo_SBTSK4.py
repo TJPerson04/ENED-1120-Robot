@@ -16,6 +16,9 @@ track = Track()
 temp = input("Press Enter to Continue")
 
 # Run any commands to the robot here
+robot.dir = 0
+robot.dir_plan = 0
+
 robot.turnTo(90)
 robot.moveForward(3, stopWhenObj=False)
 robot.pickUp()
